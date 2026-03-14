@@ -1,8 +1,12 @@
  // backend.js
 import express from "express";
+import cors from "cors";
 
 const app = express();
 const port = 8000;
+
+app.use(express.json());
+app.use(cors());
 
 const users = {
   users_list: [
@@ -34,6 +38,10 @@ const users = {
   ]
 };
 
+function generateId() {
+  return Math.random();
+}
+
 const findUserByName = (name) => {
   return users["users_list"].filter(
     (user) => user["name"] === name
@@ -60,8 +68,12 @@ app.get("/users/:id", (req, res) => {
 
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
-  addUser(userToAdd);
-  res.send();
+  const userWithId = {
+    id: generateId(),
+    ...userToAdd,
+  };
+  addUser(userWithId);
+  res.status(201).json(userWithId);
 });
 
 app.get("/users", (req, res) => {
@@ -75,11 +87,19 @@ app.get("/users", (req, res) => {
   }
 });
 
-app.get("/users", (req, res) => {
-  res.send(users);
+
+app.delete("/users/:id", (req, res) => {
+  const id = Number(req.params.id); 
+  const before = users_list.length;
+  users_list = users_list.filter((u) => u.id !== id);
+  const after = users_list.length;
+  if (after === before) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  return res.sendStatus(204); 
 });
 
-app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
